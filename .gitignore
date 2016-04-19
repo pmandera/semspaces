@@ -1,0 +1,13 @@
+build/
+dist/
+semspaces.egg-info/
+
+data/
+
+*.pyc
+
+*.swo
+*.swp
+*.swn
+
+*.zip

@@ -1,0 +1,36 @@
+#!/usr/bin/env python
+"""Convert word2vec output to semantic space market format."""
+import argparse
+
+parser = argparse.ArgumentParser(
+    description='word2vec to semantic space market converter')
+
+parser.add_argument('-i', '--input', required=True,
+                    help='input csv filename (csv format)')
+parser.add_argument('-o', '--output', required=True,
+                    help='output ssmarket filename')
+parser.add_argument('-s', '--subset',
+                    help='file with words to include')
+
+args = parser.parse_args()
+
+import codecs
+import semspaces.space as ss
+
+def load_words(fname):
+    fin = codecs.open(fname, 'r', encoding='utf-8')
+    words = [w.split()[0].strip() for w in fin.readlines()]
+    return words
+
+space = ss.SemanticSpace.from_csv(args.input)
+
+if args.subset:
+    words = []
+    for w in load_words(args.subset):
+        if space.defined_at(w):
+            words.append(w)
+        else:
+            print 'Warning, not defined in space: %s' % w
+    space = space.subset(words)
+
+space.save(args.output)

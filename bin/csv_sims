@@ -1,0 +1,55 @@
+#!/usr/bin/env python
+import codecs
+import semspaces.space
+import pandas as pd
+import argparse
+
+
+parser = argparse.ArgumentParser(description="Calculate similarities for words")
+
+parser.add_argument('-i', '--inputfile', help='file with comma separated words')
+parser.add_argument('-s', '--spacefile', help='file with semantic spacer')
+parser.add_argument('-o', '--outfile', help='output file')
+parser.add_argument('-f', '--format', default='csv',
+                    help='space format')
+parser.add_argument('-v', '--vocab', default=None,
+                    help='file with allowed words, default: allow all words')
+
+args = parser.parse_args()
+
+input_file = args.inputfile
+output_file = args.outfile
+space_file = args.spacefile
+space_format = args.format
+vocab_file = args.vocab
+
+if space_format == 'csv':
+    sspace = semspaces.space.SemanticSpace.from_csv(space_file)
+elif space_format == 'ssmarket':
+    sspace = semspaces.space.SemanticSpace.from_ssmarket(space_file)
+else:
+    raise 'Give correct format!'
+
+def load_vocab(vocabfile):
+    fin = codecs.open(vocabfile, 'r', encoding='utf-8')
+    words = set([w.strip() for w in fin.readlines()])
+    return words
+
+def similarities(sspace, word_pairs):
+    """Return similarities df based on pairs of words."""
+    sims_dict = sspace.pair_distances(word_pairs)
+    sims_list = [[e[0][0], e[0][1], e[1]] for e in sims_dict.items()]
+    sims_df = pd.DataFrame(sims_list)
+    sims_df.columns = ['cue', 'target', 'sim']
+    return sims_df
+
+if vocab_file is not None:
+    sspace = sspace.subset(load_vocab(vocab_file))
+
+data = pd.io.parsers.read_csv(input_file)
+
+stim_pairs = [(r[1][0], r[1][1]) for r in data.iterrows()]
+
+sims_df = similarities(sspace, stim_pairs)
+
+sims_df.to_csv(output_file, index=False)
