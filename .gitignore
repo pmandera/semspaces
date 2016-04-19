@@ -4,6 +4,8 @@ semspaces.egg-info/
 
 data/
 
+.venv
+
 *.pyc
 
 *.swo
