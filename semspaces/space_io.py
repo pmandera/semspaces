@@ -362,16 +362,9 @@ class CSVReader(object):
                     ncol = len(row) - 1
 
             word = str(row[0])
-            try:
-                word_vector = np.fromiter(
-                    [float(v) for v in row[1: ncol + 1]],
-                    dtype=dtype, count=ncol)
-            # Comments at the beginning of semantic space files cause
-            # the float casting to fail, so except it and continue
-            # to the next line
-            except ValueError:
-                raise ValueError
-                continue
+            word_vector = np.fromiter(
+                [float(v) for v in row[1: ncol + 1]],
+                dtype=dtype, count=ncol)
 
             word_vectors.append((word, word_vector))
 
