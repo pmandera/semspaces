@@ -10,9 +10,9 @@ import sklearn.metrics.pairwise as smp
 try:
     import pandas as pd
 except ImportError:
-    print 'Warning: pandas not available. Exporting to pandas will not work.'
-
-import space_io
+    print('Warning: pandas not available. Exporting to pandas will not work.')
+# relative import in python 3 - remove references to space_io
+from .space_io import *
 
 metrics_sklearn = ['cosine', 'euclidean', 'manhattan', 'cityblock', 'l1', 'l2']
 
@@ -31,6 +31,7 @@ class SemanticSpace(object):
     SemanticSpace also implements easy methods for loading and saving the
     semantic spaces.
     """
+
     def __init__(self, vectors, words, cols=None,
                  readme_title='', readme_desc='', prenorm=False):
         if prenorm:
@@ -51,7 +52,8 @@ class SemanticSpace(object):
 
     def defined_at(self, element):
         """Check if element is in the space."""
-        if isinstance(element, basestring):
+        # python docs recommend replacing basestr with str
+        if isinstance(element, str):
             return element in self._incl_words
         elif isinstance(element, list):
             for word in element:
@@ -86,9 +88,9 @@ class SemanticSpace(object):
     def from_ssmarket(cls, fname, prenorm=False):
         """Load a semantic space from semantic space market format."""
         if fname[-4:] == '.zip':
-            ssmarket = space_io.ExternalZipSemanticSpaceMarket(fname, 'r')
+            ssmarket = ExternalZipSemanticSpaceMarket(fname, 'r')
         else:
-            ssmarket = space_io.DirSemanticSpaceMarket(fname, 'r')
+            ssmarket = DirSemanticSpaceMarket(fname, 'r')
         data, rows, cols, r_t, r_d = ssmarket.read_all()
         ssmarket.close()
         return cls(data, rows, cols, r_t, r_d, prenorm=prenorm)
@@ -96,25 +98,24 @@ class SemanticSpace(object):
     @classmethod
     def from_csv(cls, fname, prenorm=False, dtype='float64'):
         """Read a semantic space from a CSV file."""
-        words, vectors, title, readme = space_io.CSVReader.read(fname,
-                                                                dtype=dtype)
+        words, vectors, title, readme = CSVReader.read(fname, dtype=dtype)
         return cls(vectors, words, None, title, readme, prenorm=prenorm)
 
     def save_ssmarket(self, fname):
         """Save in a semantic space format."""
-        ssmarket = space_io.SemanticSpaceMarket(fname, 'w')
+        ssmarket = SemanticSpaceMarket(fname, 'w')
         ssmarket.write_all(self.vectors, self.words, self.cols,
                            self.title, self.readme)
         ssmarket.close()
 
     def save_csv(self, fname, compress=True):
         """Save in a CSV format."""
-        space_io.CSVWriter.write(fname, self, compress)
+        CSVWriter.write(fname, self, compress)
 
     def to_pandas(self):
         """Return as pandas DataFrame."""
         if scipy.sparse.issparse(self.vectors):
-            print 'Sparse matrices cannot currently be converted to pandas.'
+            print('Sparse matrices cannot currently be converted to pandas.')
             return None
         if self.cols is None:
             return pd.DataFrame(self.vectors, self.words)
@@ -145,7 +146,8 @@ class SemanticSpace(object):
             neigh_indexes = neighbours.argsort().values[:n]
             neighs = sim_cols[neigh_indexes]
             neighs_dist = [float(d) for d in neighbours.values[neigh_indexes]]
-            most_similar[word] = zip(neighs, neighs_dist)
+            # zip returns iterator, cast as list
+            most_similar[word] = list(zip(neighs, neighs_dist))
 
         return most_similar
 
@@ -260,7 +262,7 @@ class SemanticSpace(object):
             negative_vec * -1.0])
         norm_vectors = np.linalg.norm(vectors, axis=1)
 
-        vectors = np.dot(vectors.T, np.diag(1./norm_vectors)).T
+        vectors = np.dot(vectors.T, np.diag(1. / norm_vectors)).T
 
         rel = vectors.sum(axis=0)
 
@@ -286,7 +288,8 @@ class SemanticSpace(object):
                 break
 
         neighs_dist = [float(v) for v in sims[0, neighs_indexes]]
-        return zip(neighs, neighs_dist)
+        # cast zip iterator as list
+        return list(zip(neighs, neighs_dist))
 
     # Vector selection methods
 
@@ -324,7 +327,7 @@ class SemanticSpace(object):
             vector = np.array(self.vectors[rows, :].sum(0))[0]
 
         if self.prenorm:
-            return vector/np.linalg.norm(vector)
+            return vector / np.linalg.norm(vector)
         else:
             return vector
 
@@ -346,7 +349,7 @@ class SemanticSpace(object):
         Get either a vector corresponding either to a word (if element
         is a string) or a sum of vectors (if element is a list).
         """
-        if isinstance(element, basestring):
+        if isinstance(element, str):
             vector = self.word_vector(element, dense=dense)
         elif isinstance(element, list):
             vector = self.combined_vector(element)
@@ -360,10 +363,11 @@ class SemanticSpace(object):
 
     def label(self, e):
         """Create a label for an element."""
-        if isinstance(e, basestring):
+        if isinstance(e, str):
             return e
         elif isinstance(e, list):
-            return u' '.join(e)
+            # default is unicode
+            return ' '.join(e)
         else:
             raise Exception("Illegal element!")
 

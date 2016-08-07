@@ -20,11 +20,12 @@ import scipy.sparse
 try:
     import pandas as pd
 except ImportError:
-    print 'Warning: pandas not available. Importing to pandas will not work.'
+    print('Warning: pandas not available. Importing to pandas will not work.')
 
 
 class AbstractSemanticSpaceMarket(object):
     """Read and write from/to semantic space format."""
+
     def __init__(self, fname, mode='r'):
         self.fname = fname
         self.mode = mode
@@ -83,12 +84,12 @@ class AbstractSemanticSpaceMarket(object):
             readme_file.close()
             if len(readme) >= 3:
                 title = readme[0].strip()
-                description = u''.join(readme[2:])
+                description = ''.join(readme[2:])
             elif len(readme) >= 1:
                 title = readme[0].strip()
-                description = u''
+                description = ''
             else:
-                print 'Warning: README.md exists but seems to be malformed.'
+                print('Warning: README.md exists but seems to be malformed.')
                 return None
             return (title, description)
         else:
@@ -166,7 +167,8 @@ class AbstractSemanticSpaceMarket(object):
     def write_from_pandas(self, df, readme_title='', readme_desc=''):
         """Write a semantic space from pandas data frame"""
         rows = list(df.index)
-        cols = [unicode(c) for c in list(df.columns)]
+        # py3 strs are unicode
+        cols = [str(c) for c in list(df.columns)]
         self.write_all(df.as_matrix(), rows, cols, readme_title, readme_desc)
 
     def close(self):
@@ -182,6 +184,7 @@ class AbstractSemanticSpaceMarket(object):
 
 class ZipSemanticSpaceMarket(AbstractSemanticSpaceMarket):
     """Read and write from/to semantic space format Zip file."""
+
     def __init__(self, fname, mode='r'):
         super(ZipSemanticSpaceMarket, self).__init__(fname, mode)
         self.root_file = self.create_fs(fname, mode)
@@ -203,6 +206,7 @@ class ZipSemanticSpaceMarket(AbstractSemanticSpaceMarket):
 
 class DirSemanticSpaceMarket(AbstractSemanticSpaceMarket):
     """Read and write from/to semantic space format Zip file."""
+
     def get_file(self, fname, mode):
         path = os.path.join(self.fname, fname)
         if mode != 'r' or os.path.isfile(path):
@@ -215,6 +219,7 @@ class DirSemanticSpaceMarket(AbstractSemanticSpaceMarket):
         else:
             return None
 
+
 class ExternalZipSemanticSpaceMarket(DirSemanticSpaceMarket):
     """
     Read and write from/to semantic space format Zip file by
@@ -223,6 +228,7 @@ class ExternalZipSemanticSpaceMarket(DirSemanticSpaceMarket):
     This implementation has less memory footprint than the
     ZipSemanticSpaceMarket.
     """
+
     def __init__(self, fname, mode='r'):
         self.archive_name = fname
         self.temp = tempfile.mkdtemp()
@@ -237,7 +243,8 @@ class ExternalZipSemanticSpaceMarket(DirSemanticSpaceMarket):
     def close(self):
         if self.mode == 'w' and not self.saved:
             with closing(zipfile.ZipFile(self.archive_name, 'w',
-                                 zipfile.ZIP_DEFLATED, allowZip64=True)) as z:
+                                         zipfile.ZIP_DEFLATED,
+                                         allowZip64=True)) as z:
                 for root, dirs, files in os.walk(self.temp):
                     for f in files:
                         z.write(os.path.join(root, f), f)
@@ -317,11 +324,11 @@ class CSVReader(object):
 
         # remember position to be able to come back
         position = fin.tell()
-
-        for line in fin:
+        # TextIOWrappers disable tell(), enumerate lines in order
+        # to save position
+        for pos, line in enumerate(fin):
             if line[0] == '#':
-                position = fin.tell()
-
+                position = pos
                 title_match = title_regex.match(line)
                 if title_match:
                     title = title_match.group(1)
@@ -329,19 +336,23 @@ class CSVReader(object):
                     readme_line = re.sub('#[ ]?', '', line.strip())
                     readme.append(readme_line)
             else:
-                fin.seek(position)
                 break
-
-        return (title, '\n'.join(readme))
+        # return position, since py3 csv readers do not read from current
+        # position of stream
+        return (title, '\n'.join(readme), position)
 
     @staticmethod
-    def read_vectors(fin, dtype='float64', delim=' '):
+    def read_vectors(fin, position, dtype='float64', delim=' '):
         """Return a list with tuples (word, word_vector)."""
+
         reader = csv.reader(fin, delimiter=delim, quoting=csv.QUOTE_NONE)
         word_vectors = []
+        # manually skip to the line we want, since csv.reader doesn't
+        # take into account stream position
+        for _ in range(position):
+            next(reader)
 
         ncol = None
-
         for row in reader:
             if ncol is None:
                 if len(row) == 2:
@@ -350,11 +361,17 @@ class CSVReader(object):
                 else:
                     ncol = len(row) - 1
 
-            word = unicode(row[0], 'utf-8', errors='replace')
-
-            word_vector = np.fromiter(
-                [float(v) for v in row[1: ncol + 1]],
-                dtype=dtype, count=ncol)
+            word = str(row[0])
+            try:
+                word_vector = np.fromiter(
+                    [float(v) for v in row[1: ncol + 1]],
+                    dtype=dtype, count=ncol)
+            # Comments at the beginning of semantic space files cause
+            # the float casting to fail, so except it and continue
+            # to the next line
+            except ValueError:
+                raise ValueError
+                continue
 
             word_vectors.append((word, word_vector))
 
@@ -364,12 +381,11 @@ class CSVReader(object):
     def read_file(fname, dtype='float64', delim=' '):
         """Return a tuple with (words, [list of vector values])."""
         if fname.endswith('.gz'):
-            fin = gzip.open(fname, 'r')
+            fin = gzip.open(fname, 'rt')  # py3 expects text
         else:
             fin = open(fname, 'r')
-
-        title, readme = CSVReader.read_header(fin)
-        word_vectors = CSVReader.read_vectors(fin, dtype, delim)
+        title, readme, position = CSVReader.read_header(fin)
+        word_vectors = CSVReader.read_vectors(fin, position, dtype, delim)
 
         return (word_vectors, title, readme)
 
@@ -385,5 +401,6 @@ class CSVReader(object):
         """
         word_vectors, title, readme = cls.read_file(fname, dtype=dtype,
                                                     delim=' ')
-        words, vectors = zip(*word_vectors)
+        # cast zip iterator as list
+        words, vectors = list(zip(*word_vectors))
         return (words, np.array(vectors), title, readme)

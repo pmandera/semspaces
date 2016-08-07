@@ -5,17 +5,17 @@ from semspaces.space import SemanticSpace
 import numpy as np
 import scipy.sparse
 
-dense_space = np.array([[0.61502426,  0.35800892,  0.46591138],
-                 [0.00000000,  0.80705953,  0.87805124],
-                 [0.18189868,  0.37707662,  0.89973192],
-                 [0.32667934,  0.0994168 ,  0.75457225],
-                 [0.43300126,  0.17586539,  0.88097073],
-                 [0.62085788,  0.29817756,  0.62991792],
-                 [0.37163458,  0.86633926,  0.31679958],
-                 [0.37416635,  0.82935107,  0.34275204],
-                 [0.26996958,  0.57101081,  0.60706083],
-                 [0.36690094,  0.70666147,  0.3300295 ],
-                 [0.19479401,  0.3334173 ,  0.79296408]])
+dense_space = np.array([[0.61502426, 0.35800892, 0.46591138],
+                        [0.00000000, 0.80705953, 0.87805124],
+                        [0.18189868, 0.37707662, 0.89973192],
+                        [0.32667934, 0.0994168, 0.75457225],
+                        [0.43300126, 0.17586539, 0.88097073],
+                        [0.62085788, 0.29817756, 0.62991792],
+                        [0.37163458, 0.86633926, 0.31679958],
+                        [0.37416635, 0.82935107, 0.34275204],
+                        [0.26996958, 0.57101081, 0.60706083],
+                        [0.36690094, 0.70666147, 0.3300295],
+                        [0.19479401, 0.3334173, 0.79296408]])
 
 sparse_space = scipy.sparse.csr_matrix(dense_space)
 
@@ -44,7 +44,8 @@ class TestSemanticSpace(unittest.TestCase):
         assert not self.semspace.defined_at(['one', 'twelfth'])
 
     def test_similarity_pairs(self):
-        self.assertAlmostEqual(self.semspace.pair_distance('first', 'first'), 0)
+        self.assertAlmostEqual(
+            self.semspace.pair_distance('first', 'first'), 0)
         assert self.semspace.pair_distance('first', 'second') > 1e-10
 
     def test_prenormalization(self):
@@ -52,7 +53,7 @@ class TestSemanticSpace(unittest.TestCase):
                                  readme_desc, prenorm=True)
         for row in semspace.vectors:
             row_norm = np.linalg.norm(row)
-            print row_norm, row
+            print(row_norm, row)
             self.assertAlmostEqual(row_norm, 1.0)
 
     def test_prenorm_exception_on_non_cosine(self):
@@ -150,7 +151,7 @@ class TestSemanticSpace(unittest.TestCase):
         semspace = SemanticSpace(space, rows, columns, readme_title,
                                  readme_desc, prenorm=False)
         for metric in semspace.allowed_metrics():
-            print metric
+            print(metric)
             pairs = [('first', 'second'), ('third', 'eighth'),
                      ('twelfth', 'first'), ('twelfth', 'thirteenth')]
             self.semspace.pair_distances(pairs, metric=metric)
@@ -159,10 +160,10 @@ class TestSemanticSpace(unittest.TestCase):
         semspace = SemanticSpace(space, rows, columns, readme_title,
                                  readme_desc, prenorm=False)
         vector = semspace.combined_vector(['first', 'third'])
-        assert (space[[0,2], :].sum(0) == vector).all()
+        assert (space[[0, 2], :].sum(0) == vector).all()
 
         vector = semspace.combined_vector(['second', 'fourth'])
-        assert (space[[1,3], :].sum(0) == vector).all()
+        assert (space[[1, 3], :].sum(0) == vector).all()
 
     def test_combined_vector_prenorm(self):
         semspace = SemanticSpace(space, rows, columns, readme_title,
@@ -174,7 +175,11 @@ class TestSemanticSpace(unittest.TestCase):
         semspace = SemanticSpace(sparse_space, rows, columns, readme_title,
                                  readme_desc, prenorm=False)
         vector = semspace.combined_vector(['first', 'third'])
-        assert (space[[0,2], :].sum(0) == vector).all()
+        assert (space[[0, 2], :].sum(0) == vector).all()
 
         vector = semspace.combined_vector(['second', 'fourth'])
-        assert (space[[1,3], :].sum(0) == vector).all()
+        assert (space[[1, 3], :].sum(0) == vector).all()
+
+if __name__ == '__main__':
+    unittest.main()
+
