@@ -301,15 +301,21 @@ class SemanticSpace(object):
         if not elements:
             return self.vectors[[], :]
 
-        vectors = []
-        for elem in elements:
-            vector = self.get_vector(elem)
-            vectors.append(vector)
-
-        if scipy.sparse.issparse(vectors[0]):
-            result = scipy.sparse.vstack(vectors)
+        if all((isinstance(e, basestring) for e in elements)):
+            elements_set = set(elements)
+            word_rows = [nr for nr, e in enumerate(self.words) if e in elements_set]
+            result = self.vectors[word_rows, :]
         else:
-            result = np.vstack(vectors)
+            vectors = []
+            for elem in elements:
+                vector = self.get_vector(elem)
+                vectors.append(vector)
+
+            if scipy.sparse.issparse(vectors[0]):
+                result = scipy.sparse.vstack(vectors)
+            else:
+                result = np.vstack(vectors)
+
         return result
 
     def combined_vector(self, words):
