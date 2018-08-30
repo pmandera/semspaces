@@ -52,7 +52,7 @@ class TestSemanticSpace(unittest.TestCase):
                                  readme_desc, prenorm=True)
         for row in semspace.vectors:
             row_norm = np.linalg.norm(row)
-            print row_norm, row
+            print(row_norm, row)
             self.assertAlmostEqual(row_norm, 1.0)
 
     def test_prenorm_exception_on_non_cosine(self):
@@ -109,17 +109,17 @@ class TestSemanticSpace(unittest.TestCase):
         first_second = self.semspace.pair_distance('first', 'second')
         assert pairs_sims[('first', 'second')] == first_second
 
-        assert ('third', 'eighth') in pairs_sims.keys()
-        assert ('twelfth', 'first') not in pairs_sims.keys()
-        assert ('twelfth', 'thirteenth') not in pairs_sims.keys()
+        assert ('third', 'eighth') in list(pairs_sims.keys())
+        assert ('twelfth', 'first') not in list(pairs_sims.keys())
+        assert ('twelfth', 'thirteenth') not in list(pairs_sims.keys())
 
         pairs_sims_nan = self.semspace.pair_distances(pairs, na_val=True)
 
         assert pairs_sims_nan[('first', 'second')] == first_second
 
-        assert ('third', 'eighth') in pairs_sims_nan.keys()
-        assert ('twelfth', 'first') in pairs_sims_nan.keys()
-        assert ('twelfth', 'thirteenth') in pairs_sims_nan.keys()
+        assert ('third', 'eighth') in list(pairs_sims_nan.keys())
+        assert ('twelfth', 'first') in list(pairs_sims_nan.keys())
+        assert ('twelfth', 'thirteenth') in list(pairs_sims_nan.keys())
 
         assert pairs_sims_nan[('twelfth', 'first')] is np.nan
         assert pairs_sims_nan[('twelfth', 'thirteenth')] is np.nan
@@ -150,7 +150,7 @@ class TestSemanticSpace(unittest.TestCase):
         semspace = SemanticSpace(space, rows, columns, readme_title,
                                  readme_desc, prenorm=False)
         for metric in semspace.allowed_metrics():
-            print metric
+            print(metric)
             pairs = [('first', 'second'), ('third', 'eighth'),
                      ('twelfth', 'first'), ('twelfth', 'thirteenth')]
             self.semspace.pair_distances(pairs, metric=metric)

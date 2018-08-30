@@ -20,7 +20,7 @@ import scipy.sparse
 try:
     import pandas as pd
 except ImportError:
-    print 'Warning: pandas not available. Importing to pandas will not work.'
+    print('Warning: pandas not available. Importing to pandas will not work.')
 
 
 class AbstractSemanticSpaceMarket(object):
@@ -83,12 +83,12 @@ class AbstractSemanticSpaceMarket(object):
             readme_file.close()
             if len(readme) >= 3:
                 title = readme[0].strip()
-                description = u''.join(readme[2:])
+                description = ''.join(readme[2:])
             elif len(readme) >= 1:
                 title = readme[0].strip()
-                description = u''
+                description = ''
             else:
-                print 'Warning: README.md exists but seems to be malformed.'
+                print('Warning: README.md exists but seems to be malformed.')
                 return None
             return (title, description)
         else:
@@ -166,7 +166,7 @@ class AbstractSemanticSpaceMarket(object):
     def write_from_pandas(self, df, readme_title='', readme_desc=''):
         """Write a semantic space from pandas data frame"""
         rows = list(df.index)
-        cols = [unicode(c) for c in list(df.columns)]
+        cols = [str(c) for c in list(df.columns)]
         self.write_all(df.as_matrix(), rows, cols, readme_title, readme_desc)
 
     def close(self):
@@ -350,7 +350,7 @@ class CSVReader(object):
                 else:
                     ncol = len(row) - 1
 
-            word = unicode(row[0], 'utf-8', errors='replace')
+            word = row[0]
 
             word_vector = np.fromiter(
                 [float(v) for v in row[1: ncol + 1]],
@@ -364,9 +364,9 @@ class CSVReader(object):
     def read_file(fname, dtype='float64', delim=' '):
         """Return a tuple with (words, [list of vector values])."""
         if fname.endswith('.gz'):
-            fin = gzip.open(fname, 'r')
+            fin = gzip.open(fname, 'rt')
         else:
-            fin = open(fname, 'r')
+            fin = open(fname, 'rt')
 
         title, readme = CSVReader.read_header(fin)
         word_vectors = CSVReader.read_vectors(fin, dtype, delim)
@@ -385,5 +385,5 @@ class CSVReader(object):
         """
         word_vectors, title, readme = cls.read_file(fname, dtype=dtype,
                                                     delim=' ')
-        words, vectors = zip(*word_vectors)
+        words, vectors = list(zip(*word_vectors))
         return (words, np.array(vectors), title, readme)

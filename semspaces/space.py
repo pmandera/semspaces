@@ -10,9 +10,9 @@ import sklearn.metrics.pairwise as smp
 try:
     import pandas as pd
 except ImportError:
-    print 'Warning: pandas not available. Exporting to pandas will not work.'
+    print('Warning: pandas not available. Exporting to pandas will not work.')
 
-import space_io
+from . import space_io
 
 metrics_sklearn = ['cosine', 'euclidean', 'manhattan', 'cityblock', 'l1', 'l2']
 
@@ -51,7 +51,7 @@ class SemanticSpace(object):
 
     def defined_at(self, element):
         """Check if element is in the space."""
-        if isinstance(element, basestring):
+        if isinstance(element, str):
             return element in self._incl_words
         elif isinstance(element, list):
             for word in element:
@@ -114,7 +114,7 @@ class SemanticSpace(object):
     def to_pandas(self):
         """Return as pandas DataFrame."""
         if scipy.sparse.issparse(self.vectors):
-            print 'Sparse matrices cannot currently be converted to pandas.'
+            print('Sparse matrices cannot currently be converted to pandas.')
             return None
         if self.cols is None:
             return pd.DataFrame(self.vectors, self.words)
@@ -145,7 +145,7 @@ class SemanticSpace(object):
             neigh_indexes = neighbours.argsort().values[:n]
             neighs = sim_cols[neigh_indexes]
             neighs_dist = [float(d) for d in neighbours.values[neigh_indexes]]
-            most_similar[word] = zip(neighs, neighs_dist)
+            most_similar[word] = list(zip(neighs, neighs_dist))
 
         return most_similar
 
@@ -286,7 +286,7 @@ class SemanticSpace(object):
                 break
 
         neighs_dist = [float(v) for v in sims[0, neighs_indexes]]
-        return zip(neighs, neighs_dist)
+        return list(zip(neighs, neighs_dist))
 
     # Vector selection methods
 
@@ -301,7 +301,7 @@ class SemanticSpace(object):
         if not elements:
             return self.vectors[[], :]
 
-        if all((isinstance(e, basestring) for e in elements)):
+        if all((isinstance(e, str) for e in elements)):
             elements_set = set(elements)
             word_rows = [nr for nr, e in enumerate(self.words) if e in elements_set]
             result = self.vectors[word_rows, :]
@@ -352,7 +352,7 @@ class SemanticSpace(object):
         Get either a vector corresponding either to a word (if element
         is a string) or a sum of vectors (if element is a list).
         """
-        if isinstance(element, basestring):
+        if isinstance(element, str):
             vector = self.word_vector(element, dense=dense)
         elif isinstance(element, list):
             vector = self.combined_vector(element)
@@ -366,10 +366,10 @@ class SemanticSpace(object):
 
     def label(self, e):
         """Create a label for an element."""
-        if isinstance(e, basestring):
+        if isinstance(e, str):
             return e
         elif isinstance(e, list):
-            return u' '.join(e)
+            return ' '.join(e)
         else:
             raise Exception("Illegal element!")
 
