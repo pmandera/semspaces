@@ -45,6 +45,8 @@ class SemanticSpace(object):
         self._incl_words = set(words)
         self.shape = self.vectors.shape
 
+        self.word2id = dict(zip(words, range(len(words))))
+
     def included_words(self):
         """All included words."""
         return self._incl_words
@@ -302,9 +304,8 @@ class SemanticSpace(object):
             return self.vectors[[], :]
 
         if all((isinstance(e, str) for e in elements)):
-            elements_set = set(elements)
-            word_rows = [nr for nr, e in enumerate(self.words) if e in elements_set]
-            result = self.vectors[word_rows, :]
+            elem_rows = [self.word2id[e] for e in elements]
+            result = self.vectors[elem_rows, :]
         else:
             vectors = []
             for elem in elements:
@@ -377,7 +378,7 @@ class SemanticSpace(object):
 
     def _row_nums(self, words):
         """Return number of rows for words."""
-        return self._all_indexes(self.words, words)
+        return [self.word2id[w] for w in words]
 
     def _words(self, indexes):
         """Return number of rows for words."""
