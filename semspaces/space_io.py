@@ -20,6 +20,7 @@ import scipy.sparse
 try:
     import pandas as pd
 except ImportError:
+    pd = None
     print('Warning: pandas not available. Importing to pandas will not work.')
 
 
@@ -266,9 +267,9 @@ class CSVWriter(object):
               shape=False):
 
         if compress:
-            fout = gzip.open(fname, 'wb')
+            fout = gzip.open(fname, 'wt')
         else:
-            fout = open(fname, 'wb')
+            fout = open(fname, 'wt')
 
         if header is True:
             if space.title is not None:
@@ -318,7 +319,9 @@ class CSVReader(object):
         # remember position to be able to come back
         position = fin.tell()
 
-        for line in fin:
+        line = fin.readline()
+
+        while line:
             if line[0] == '#':
                 position = fin.tell()
 
@@ -332,33 +335,42 @@ class CSVReader(object):
                 fin.seek(position)
                 break
 
+            line = fin.readline()
+
         return (title, '\n'.join(readme))
 
     @staticmethod
-    def read_vectors(fin, dtype='float64', delim=' '):
+    def read_ncol(fin, delim):
+        """Determine number of columns"""
+        position = fin.tell()
+        row = fin.readline().split(delim)
+        if len(row) == 2:
+            ncol = int(row[1])
+        else:
+            ncol = len(row) - 1
+            fin.seek(position)
+        return ncol
+
+    @staticmethod
+    def read_vectors(fin, ncol, dtype='float64', delim=' '):
         """Return a list with tuples (word, word_vector)."""
         reader = csv.reader(fin, delimiter=delim, quoting=csv.QUOTE_NONE)
-        word_vectors = []
-
-        ncol = None
-
-        for row in reader:
-            if ncol is None:
-                if len(row) == 2:
-                    ncol = int(row[1])
-                    continue
-                else:
-                    ncol = len(row) - 1
-
-            word = row[0]
-
-            word_vector = np.fromiter(
-                [float(v) for v in row[1: ncol + 1]],
-                dtype=dtype, count=ncol)
-
-            word_vectors.append((word, word_vector))
-
+        word_vectors = [
+            (
+                row[0],
+                np.array(row[1: ncol + 1], dtype=dtype)
+            )
+            for row in reader
+        ]
         return word_vectors
+
+    @staticmethod
+    def read_vectors_pd(fin, ncol, delim=' '):
+        """Return Pandas DF with words as index"""
+        df = pd.read_csv(fin, sep=delim, header=None, index_col=0,
+                         keep_default_na=False, quoting=csv.QUOTE_NONE,
+                         usecols=range(ncol + 1), encoding='utf-8')
+        return df
 
     @staticmethod
     def read_file(fname, dtype='float64', delim=' '):
@@ -369,9 +381,18 @@ class CSVReader(object):
             fin = open(fname, 'rt')
 
         title, readme = CSVReader.read_header(fin)
-        word_vectors = CSVReader.read_vectors(fin, dtype, delim)
+        ncol = CSVReader.read_ncol(fin, delim)
 
-        return (word_vectors, title, readme)
+        if pd is not None:
+            df = CSVReader.read_vectors_pd(fin, ncol, delim)
+            vectors = np.array(df.astype(dtype))
+            words = list(df.index)
+        else:
+            word_vectors = CSVReader.read_vectors(fin, ncol, dtype, delim)
+            words, vectors = list(zip(*word_vectors))
+            vectors = np.array(vectors)
+
+        return (words, vectors, title, readme)
 
     @classmethod
     def read(cls, fname, dtype='float64', delim=' '):
@@ -383,7 +404,4 @@ class CSVReader(object):
         :param delim: delimiter
         :returns: tupel (words, np.array vector matrix, title, readme)
         """
-        word_vectors, title, readme = cls.read_file(fname, dtype=dtype,
-                                                    delim=' ')
-        words, vectors = list(zip(*word_vectors))
-        return (words, np.array(vectors), title, readme)
+        return cls.read_file(fname, dtype=dtype, delim=' ')

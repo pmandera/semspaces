@@ -69,7 +69,10 @@ class SemanticSpace(object):
 
     def subset(self, words):
         """Subset a space to contain only specified words."""
-        words = list(set(words))
+
+        assert len(words) == len(set(words))
+
+        words = list(words)
         rows = self._row_nums(words)
         new_space = self.vectors[rows, :]
         nrows, ncols = new_space.shape
