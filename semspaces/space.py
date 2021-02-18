@@ -13,6 +13,7 @@ except ImportError:
     print('Warning: pandas not available. Exporting to pandas will not work.')
 
 from . import space_io
+from . import utils
 
 metrics_sklearn = ['cosine', 'euclidean', 'manhattan', 'cityblock', 'l1', 'l2']
 
@@ -376,6 +377,16 @@ class SemanticSpace(object):
             return ' '.join(e)
         else:
             raise Exception("Illegal element!")
+
+    def postprocess_vectors(self, d=None):
+        """
+        Postprocess vectors following:
+
+        Jiaqi Mu, Suma Bhat, Pramod Viswanath. 2017.
+        All-but-the-Top: Simple and Effective Postpro-cessing for Word
+        Representations.https://arxiv.org/abs/1702.01417
+        """
+        self.vectors = utils.postprocess(self.vectors, d=d)
 
     # Helper methods
 
