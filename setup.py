@@ -7,7 +7,7 @@ with open("README.md", "r") as fh:
 
 setup(
     name="semspaces",
-    version = "0.1.4",
+    version = "0.1.5",
     packages=find_packages(),
     scripts=['bin/w2v2ssm', 'bin/csv_sims', 'bin/subset_space'],
     install_requires=['fs>=0.5.0',
