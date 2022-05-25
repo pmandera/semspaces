@@ -7,15 +7,14 @@ with open("README.md", "r") as fh:
 
 setup(
     name="semspaces",
-    version = "0.1.5",
+    version = "0.1.6",
     packages=find_packages(),
     scripts=['bin/w2v2ssm', 'bin/csv_sims', 'bin/subset_space'],
     install_requires=['fs>=0.5.0',
-                       'numpy>=1.9.1',
-                       'scipy>=0.14.0',
-                       'pandas>=0.15.1',
-                       'scikit-learn>=0.15.0'],
-
+                       'numpy>=1.22.4',
+                       'scipy>=1.5.0',
+                       'pandas>=1.4.2',
+                       'scikit-learn>=1.1.1'],
 
     # metadata for upload to PyPI
     author="Paweł Mandera",
