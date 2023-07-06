@@ -12,7 +12,7 @@ setup(
     scripts=['bin/w2v2ssm', 'bin/csv_sims', 'bin/subset_space'],
     install_requires=['fs==2.4.11',
                        'numpy==1.21.6',
-                       'scipy==1.5.0',
+                       'scipy==1.10.0',
                        'pandas==1.4.2',
                        'scikit-learn==1.1.1'],
 
